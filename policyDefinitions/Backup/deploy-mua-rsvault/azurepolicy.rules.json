@@ -1,0 +1,69 @@
+{
+    "if": {
+      "allof": [
+        {
+          "field": "type",
+          "equals": "Microsoft.RecoveryServices/vaults"
+        },
+        {
+          "not": {
+            "field": "[concat('tags[',parameters('tagName'), ']')]",
+            "equals": "[parameters('tagValue')]"
+          }
+        }
+      ]
+    },
+    "then": {
+      "effect": "deployIfNotExists",
+      "details": {
+        "type": "Microsoft.RecoveryServices/vaults/backupResourceGuardProxies",
+        "roleDefinitionIds": [
+          "/providers/microsoft.authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+        ],
+        "existanceCondition": {},
+        "deployment": {
+          "properties": {
+            "mode": "incremental",
+            "template": {
+              "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+              "contentVersion": "1.0.0.0",
+              "parameters": {
+                "vaultName": {
+                  "type": "string"
+                },
+                "resourceGuardResourceId": {
+                  "type": "string"
+                }
+              },
+              "variables": {},
+              "resources": [
+                {
+                  "type": "Microsoft.RecoveryServices/vaults/backupResourceGuardProxies",
+                  "apiVersion": "2023-06-01",
+                  "name": "[concat(parameters('vaultName'), '/', 'VaultProxy')]",
+                  "dependsOn": [],
+                  "properties": {
+                    "resourceGuardResourceId": "[parameters('resourceGuardResourceId')]"
+                  }
+                }
+              ],
+              "outputs": {
+                "policy": {
+                  "type": "string",
+                  "value": "[concat(parameters('resourceGuardResourceId'), 'configured for resource guard ', ': ', parameters('vaultName'))]"
+                }
+              }
+            },
+            "parameters": {
+              "resourceGuardResourceId": {
+                "value": "[parameters('resourceGuardResourceId')]"
+              },
+              "vaultName": {
+                "value": "[field('name')]"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
