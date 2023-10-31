@@ -1,0 +1,80 @@
+{
+    "properties": {
+      "displayName": "[Preview]: Enables immutability on Backup Vaults when created",
+      "description": "This policy enables immutablility on Backup Vaults when created",
+      "policyType": "Custom",
+      "mode": "Indexed",
+      "metadata": {
+        "version": "1.0.0",
+        "category": "Backup"
+      },
+      "version": "1.0.0",
+      "parameters": {
+        "effect": {
+          "type": "String",
+          "metadata": {
+            "displayName": "Effect",
+            "description": "Enable or disable the execution of the policy."
+          },
+          "allowedValues": [
+            "Append",
+            "Audit"
+          ],
+          "defaultValue": "Append"
+        },
+        "lockImmutability": {
+          "type": "Boolean",
+          "metadata": {
+            "displayName": "LockImmutibility",
+            "description": "Selecting 'true' will lock the Immutability state of the vault. Selecting 'false' will enable Immutability but not lock."
+          },
+          "allowedValues": [
+            true,
+            false
+          ],
+          "defaultValue": false
+        }
+      },
+      "policyRule": {
+        "if": {
+          "allOf": [
+            {
+              "field": "type",
+              "equals": "Microsoft.DataProtection/backupvaults"
+            },
+            {
+              "anyOf": [
+                {
+                  "field": "Microsoft.DataProtection/backupvaults/securitySettings.immutabilitySettings.state",
+                  "notIn": [
+                    "Locked",
+                    "UnLocked"
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "value": "[parameters('lockImmutability')]",
+                      "equals": true
+                    },
+                    {
+                      "field": "Microsoft.DataProtection/backupvaults/securitySettings.immutabilitySettings.state",
+                      "notEquals": "Locked"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "then": {
+          "effect": "[parameters('effect')]",
+          "details": [{
+            "field": "Microsoft.DataProtection/backupvaults/securitySettings.immutabilitySettings.state",
+            "value": "[if(parameters('lockImmutability'),'Locked','UnLocked')]"
+          }]
+        }
+      }
+    },
+    "name": "4f1cf416-6254-455e-a257-ce6ac4d736db"
+  }

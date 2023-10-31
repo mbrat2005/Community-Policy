@@ -1,0 +1,49 @@
+{
+    "properties": {
+      "displayName": "[Preview]: Soft delete should be enabled for Recovery Services Vaults",
+      "description": "This policy denies creation of Recovery Services vaults with soft delete disabled in the scope.",
+      "policyType": "Custom",
+      "mode": "Indexed",
+      "metadata": {
+        "version": "1.0.0",
+        "category": "Backup"
+      },
+      "version": "1.0.0",
+      "parameters": {
+        "effect": {
+          "type": "String",
+          "metadata": {
+            "displayName": "Effect",
+            "description": "Enable or disable the execution of the policy."
+          },
+          "allowedValues": [
+            "Audit",
+            "Deny"
+          ],
+          "defaultValue": "Deny"
+        }
+      },
+      "policyRule": {
+        "if": {
+          "allOf": [
+            {
+              "field": "type",
+              "equals": "Microsoft.RecoveryServices/vaults"
+            },
+            {
+              "anyOf": [
+                {
+                  "field": "Microsoft.RecoveryServices/vaults/securitySettings.softDeleteSettings.softDeleteState",
+                  "notEquals": "Enabled"
+                }
+              ]
+            }
+          ]
+        },
+        "then": {
+          "effect": "[parameters('effect')]"
+        }
+      }
+    },
+    "name": "f9063c14-410b-4de6-9400-c5b812c47f6a"
+  }

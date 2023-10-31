@@ -1,8 +1,8 @@
 {
     "properties": {
-        "displayName": "Deploy a Resource Guard association for Recovery Services Vault",
+        "displayName": "Deploy a Resource Guard association for Backup",
         "policyType": "Custom",
-        "description": "Deploy a Resource Guard Proxy for Recovery Services Vault, securing sensitive vault operations by requiring the requesting identity to have permissions to both the vault and the Resource Guard",
+        "description": "Deploy a Resource Guard Proxy for Backup, securing sensitive vault operations by requiring the requesting identity to have permissions to both the vault and the Resource Guard",
         "metadata": {
             "version": "1.0.0",
             "category": "Backup"
@@ -38,7 +38,7 @@
                 "allof": [
                     {
                         "field": "type",
-                        "equals": "Microsoft.RecoveryServices/vaults"
+                        "equals": "Microsoft.DataProtection/backupvaults"
                     },
                     {
                         "not": {
@@ -51,7 +51,7 @@
             "then": {
                 "effect": "deployIfNotExists",
                 "details": {
-                    "type": "Microsoft.RecoveryServices/vaults/backupResourceGuardProxies",
+                    "type": "Microsoft.DataProtection/backupvaults/backupResourceGuardProxies",
                     "roleDefinitionIds": [
                         "/providers/microsoft.authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
                     ],
@@ -73,9 +73,9 @@
                                 "variables": {},
                                 "resources": [
                                     {
-                                        "type": "Microsoft.RecoveryServices/vaults/backupResourceGuardProxies",
-                                        "apiVersion": "2023-06-01",
-                                        "name": "[concat(parameters('vaultName'), '/', 'VaultProxy')]",
+                                        "type": "Microsoft.DataProtection/backupvaults/backupResourceGuardProxies",
+                                        "apiVersion": "2023-05-01",
+                                        "name": "[concat(parameters('vaultName'), '/', 'BackupVaultProxy')]",
                                         "dependsOn": [],
                                         "properties": {
                                             "resourceGuardResourceId": "[parameters('resourceGuardResourceId')]"
@@ -103,6 +103,5 @@
             }
         }
     },
-    "id": "/providers/Microsoft.Authorization/policyDefinitions/791c6a5d-6860-430c-9038-0a7e04c07bbf",
-    "name": "791c6a5d-6860-430c-9038-0a7e04c07bbf"
+    "name": "76633b24-6cc7-4d45-ba09-e38412a74ca8"
 }
