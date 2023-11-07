@@ -1,21 +1,14 @@
 {
     "properties": {
-        "displayName": "Deploy a Resource Guard association for Recovery Services Vault",
+        "displayName": "Set Immutibility to Unlocked for Recovery Services Vault",
         "policyType": "Custom",
-        "description": "Deploy a Resource Guard Proxy for Recovery Services Vault, securing sensitive vault operations by requiring the requesting identity to have permissions to both the vault and the Resource Guard",
+        "description": "Sets the Immutibility to Unlocked for Recovery Services Vaults. This only impacts vaults which do not have an immutibility configuration",
         "metadata": {
             "version": "1.0.0",
             "category": "Backup"
         },
         "version": "1.0.0",
         "parameters": {
-            "resourceGuardResourceId": {
-                "type": "String",
-                "metadata": {
-                    "displayName": "Resource Guard ID",
-                    "description": "The resource ID of the Resource Guard to be associated with the Vault. This must be in the same tenant as the Vault to deploy with Policy."
-                }
-            },
             "tagName": {
                 "type": "String",
                 "metadata": {
@@ -45,17 +38,35 @@
                             "field": "[concat('tags[',parameters('tagName'), ']')]",
                             "equals": "[parameters('tagValue')]"
                         }
+                    },
+                    {
+                        "field": "Microsoft.RecoveryServices/vaults/securitySettings.immutabilitySettings.state",
+                        "notIn": [
+                            "Locked",
+                            "Unlocked"
+                        ]
                     }
                 ]
             },
             "then": {
                 "effect": "deployIfNotExists",
                 "details": {
-                    "type": "Microsoft.RecoveryServices/vaults/backupResourceGuardProxies",
+                    "type": "Microsoft.RecoveryServices/vaults",
                     "roleDefinitionIds": [
                         "/providers/microsoft.authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
                     ],
-                    "existenceCondition": {},
+                    "existenceCondition":    {
+                        "allOf": [
+                          {
+                            "field": "Microsoft.RecoveryServices/vaults/securitySettings.immutabilitySettings.state",
+                            "equals": "Unlocked"
+                          },
+                          {
+                            "field": "id",
+                            "equals": "[field('id')]"
+                          }
+                        ]
+                      },
                     "deployment": {
                         "properties": {
                             "mode": "incremental",
@@ -66,35 +77,62 @@
                                     "vaultName": {
                                         "type": "string"
                                     },
-                                    "resourceGuardResourceId": {
+                                    "vaultLocation": {
+                                        "type": "string"
+                                    },
+                                    "vaultSecuritySettings": {
+                                        "type": "object"
+                                    },
+                                    "vaultSku": {
+                                        "type": "object"
+                                    },
+                                    "vaultPublicNetworkAccess": {
                                         "type": "string"
                                     }
                                 },
                                 "variables": {},
                                 "resources": [
                                     {
-                                        "type": "Microsoft.RecoveryServices/vaults/backupResourceGuardProxies",
+                                        "type": "Microsoft.RecoveryServices/vaults",
                                         "apiVersion": "2023-06-01",
-                                        "name": "[concat(parameters('vaultName'), '/', 'VaultProxy')]",
+                                        "name": "[parameters('vaultName')]",
                                         "dependsOn": [],
+                                        "location": "[parameters('vaultLocation')]",
+                                        "sku": "[parameters('vaultSku')]",
                                         "properties": {
-                                            "resourceGuardResourceId": "[parameters('resourceGuardResourceId')]"
+                                            "securitySettings": {
+                                                "immutabilitySettings": {
+                                                    "state": "Unlocked"
+                                                },
+                                                "multiUserAuthorization": "[parameters('vaultSecuritySettings').multiUserAuthorization]",
+                                                "softDeleteSettings": "[parameters('vaultSecuritySettings').softDeleteSettings]"
+                                            },
+                                            "publicNetworkAccess": "[parameters('vaultPublicNetworkAccess')]"
                                         }
                                     }
                                 ],
                                 "outputs": {
                                     "policy": {
                                         "type": "string",
-                                        "value": "[concat(parameters('resourceGuardResourceId'), 'configured for resource guard ', ': ', parameters('vaultName'))]"
+                                        "value": "[concat('Immutibility settings configured for vault: ', parameters('vaultName'))]"
                                     }
                                 }
                             },
                             "parameters": {
-                                "resourceGuardResourceId": {
-                                    "value": "[parameters('resourceGuardResourceId')]"
+                                "vaultLocation": {
+                                    "value": "[field('location')]"
                                 },
                                 "vaultName": {
                                     "value": "[field('name')]"
+                                },
+                                "vaultSecuritySettings": {
+                                    "value": "[field('Microsoft.RecoveryServices/vaults/securitySettings')]"
+                                },
+                                "vaultSku": {
+                                    "value": "[field('Microsoft.RecoveryServices/vaults/sku')]"
+                                },
+                                "vaultPublicNetworkAccess": {
+                                    "value": "[field('Microsoft.RecoveryServices/vaults/publicNetworkAccess')]"
                                 }
                             }
                         }

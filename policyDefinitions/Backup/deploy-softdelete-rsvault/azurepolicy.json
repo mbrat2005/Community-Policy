@@ -1,0 +1,174 @@
+{
+    "properties": {
+        "displayName": "Set soft delete to Unlocked for Recovery Services Vault",
+        "policyType": "Custom",
+        "description": "Sets the soft delete to Unlocked for Recovery Services Vaults. This only impacts vaults which do not have an soft delete configuration",
+        "metadata": {
+            "version": "1.0.0",
+            "category": "Backup"
+        },
+        "version": "1.0.0",
+        "parameters": {
+            "tagName": {
+                "type": "String",
+                "metadata": {
+                    "displayName": "Exclusion Tag Name",
+                    "description": "Name of the tag to use for excluding vaults from this policy. This should be used along with the Exclusion Tag Value parameter."
+                },
+                "defaultValue": ""
+            },
+            "tagValue": {
+                "type": "String",
+                "metadata": {
+                    "displayName": "Exclusion Tag Value",
+                    "description": "Value of the tag to use for excluding vaults from this policy. This should be used along with the Exclusion Tag Name parameter."
+                },
+                "defaultValue": ""
+            },
+            "softDeleteRetentionInDays": {
+                "type": "Integer",
+                "metadata": {
+                    "displayName": "Soft Delete Retention In Days",
+                    "description": "Number of days to retain soft deleted items before permanently deleting them. Valid values are between 7 and 90."
+                },
+                "defaultValue": 90
+            }
+        },
+        "policyRule": {
+            "if": {
+                "allof": [
+                    {
+                        "field": "type",
+                        "equals": "Microsoft.RecoveryServices/vaults"
+                    },
+                    {
+                        "not": {
+                            "field": "[concat('tags[',parameters('tagName'), ']')]",
+                            "equals": "[parameters('tagValue')]"
+                        }
+                    },
+                    {
+                        "anyOf": [
+                            {
+                                "field": "Microsoft.RecoveryServices/vaults/securitySettings.softDeleteSettings.softDeleteState",
+                                "equals": "Disabled"
+                            },
+                            {
+                                "field": "Microsoft.RecoveryServices/vaults/securitySettings.softDeleteSettings.softDeleteRetentionPeriodInDays",
+                                "notEquals": "[parameters('softDeleteRetentionInDays')]"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "then": {
+                "effect": "deployIfNotExists",
+                "details": {
+                    "type": "Microsoft.RecoveryServices/vaults",
+                    "roleDefinitionIds": [
+                        "/providers/microsoft.authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+                    ],
+                    "existenceCondition": {
+                        "allOf": [
+                            {
+                                "anyOf": [
+                                    {
+                                        "field": "Microsoft.RecoveryServices/vaults/securitySettings.softDeleteSettings.softDeleteState",
+                                        "equals": "Disabled"
+                                    },
+                                    {
+                                        "field": "Microsoft.RecoveryServices/vaults/securitySettings.softDeleteSettings.softDeleteRetentionPeriodInDays",
+                                        "notEquals": "[parameters('softDeleteRetentionInDays')]"
+                                    }
+                                ]
+                            },
+                            {
+                                "field": "id",
+                                "equals": "[field('id')]"
+                            }
+                        ]
+                    },
+                    "deployment": {
+                        "properties": {
+                            "mode": "incremental",
+                            "template": {
+                                "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                                "contentVersion": "1.0.0.0",
+                                "parameters": {
+                                    "vaultName": {
+                                        "type": "string"
+                                    },
+                                    "vaultLocation": {
+                                        "type": "string"
+                                    },
+                                    "vaultSecuritySettings": {
+                                        "type": "object"
+                                    },
+                                    "vaultSku": {
+                                        "type": "object"
+                                    },
+                                    "vaultPublicNetworkAccess": {
+                                        "type": "string"
+                                    },
+                                    "softDeleteRetentionInDays": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "variables": {},
+                                "resources": [
+                                    {
+                                        "type": "Microsoft.RecoveryServices/vaults",
+                                        "apiVersion": "2023-06-01",
+                                        "name": "[parameters('vaultName')]",
+                                        "dependsOn": [],
+                                        "location": "[parameters('vaultLocation')]",
+                                        "sku": "[parameters('vaultSku')]",
+                                        "properties": {
+                                            "securitySettings": {
+                                                "immutabilitySettings": "[parameters('vaultSecuritySettings').immutabilitySettings]",
+                                                "multiUserAuthorization": "[parameters('vaultSecuritySettings').multiUserAuthorization]",
+                                                "softDeleteSettings": {
+                                                    "softDeleteRetentionInDays": "[parameters('softDeleteRetentionInDays')]",
+                                                    "softDeleteEnabled": true
+                                                }
+                                            },
+                                            "publicNetworkAccess": "[parameters('vaultPublicNetworkAccess')]"
+                                        }
+                                    }
+                                ],
+                                "outputs": {
+                                    "policy": {
+                                        "type": "string",
+                                        "value": "[concat('soft delete settings configured for vault: ', parameters('vaultName'))]"
+                                    }
+                                }
+                            },
+                            "parameters": {
+                                "vaultLocation": {
+                                    "value": "[field('location')]"
+                                },
+                                "vaultName": {
+                                    "value": "[field('name')]"
+                                },
+                                "vaultSecuritySettings": {
+                                    "value": "[field('Microsoft.RecoveryServices/vaults/securitySettings')]"
+                                },
+                                "vaultSku": {
+                                    "value": "[field('Microsoft.RecoveryServices/vaults/sku')]"
+                                },
+                                "vaultPublicNetworkAccess": {
+                                    "value": "[field('Microsoft.RecoveryServices/vaults/publicNetworkAccess')]"
+                                },
+                                "softDeleteRetentionInDays": {
+                                    "value": "[parameters('softDeleteRetentionInDays')]"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/791c6a5d-6860-430c-9038-0a7e04c07bbf",
+    "name": "791c6a5d-6860-430c-9038-0a7e04c07bbf"
+}
